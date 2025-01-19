@@ -1,0 +1,95 @@
+{
+    "networks": {
+        "11155111": {
+            "address": "0x9dCc3B50aE18759C33BD7ab15b0d222909000916"
+        }
+    },
+    "abi": [
+       
+    {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "string",
+            "name": "clientId",
+            "type": "string"
+          },
+          {
+            "indexed": true,
+            "internalType": "bytes32",
+            "name": "fileIdentifier",
+            "type": "bytes32"
+          }
+        ],
+        "name": "FileAccessed",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "string",
+            "name": "clientId",
+            "type": "string"
+          },
+          {
+            "indexed": true,
+            "internalType": "bytes32",
+            "name": "fileIdentifier",
+            "type": "bytes32"
+          }
+        ],
+        "name": "FileAdded",
+        "type": "event"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "clientId",
+            "type": "string"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "fileIdentifier",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes",
+            "name": "encryptedMetadata",
+            "type": "bytes"
+          }
+        ],
+        "name": "addFile",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "clientId",
+            "type": "string"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "fileIdentifier",
+            "type": "bytes32"
+          }
+        ],
+        "name": "getFileData",
+        "outputs": [
+          {
+            "internalType": "bytes",
+            "name": "",
+            "type": "bytes"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    ]
+}
