@@ -173,6 +173,37 @@ def func(h,p,clientId,a,file,fname):   # Function defined for multi threading
         else:
             continue
 
+def get_available_servers(registry_host='127.0.0.1', registry_port=65430):
+    """Get list of available servers from registry"""
+    servers = []
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((registry_host, registry_port))
+            
+            # Send connection type (2 for client)
+            s.send(b'2')
+            
+            # Receive number of available servers
+            size = s.recv(4)
+            num_servers = int.from_bytes(size, 'big')
+            
+            # Receive each server's information
+            for _ in range(num_servers):
+                # Receive host
+                size = s.recv(4)
+                host_len = int.from_bytes(size, 'big')
+                host = s.recv(host_len).decode()
+                
+                # Receive port
+                port = int.from_bytes(s.recv(4), 'big')
+                
+                servers.append((host, port))
+                
+    except Exception as e:
+        print(f"Error getting server list: {e}")
+        
+    return servers
+
 ###### Main
 
 required_env_vars = ['ALCHEMY_API_KEY', 'ETH_PRIVATE_KEY']
@@ -184,14 +215,15 @@ if missing_vars:
     exit(1)
 
 
-h='127.0.0.1'
-h1='127.0.0.1'
-h2='127.0.0.1'
-p=65432
-p1=65434
-p2=65435
+# Before the main loop, replace hardcoded server addresses with dynamic discovery
+available_servers = get_available_servers()
+if not available_servers:
+    print("No storage servers available")
+    sys.exit(1)
+else:
+    print(f"Found {len(available_servers)} available servers")
 
-clientId ='12' # input('Enter client ID.')
+clientId ='10' # input('Enter client ID.')
 blockchain = BlockchainManager()
 root= os.getcwd()
 while (True):
@@ -256,66 +288,18 @@ while (True):
        
         
         # Multi threading used to connect with multiple servers to Upload the file
-        x=Threadvalue(target=func, args =(h,p,clientId,a,newarr[0],filepath))  
-        y=Threadvalue(target=func, args=(h1,p1,clientId,a,newarr[1],filepath))
-        z=Threadvalue(target=func, args=(h2,p2,clientId,a,newarr[2],filepath))
-        x.start()
-        sid1=x.join()
-        y.start()
-        sid2=y.join()
-        z.start()
-        sid3=z.join()
+        upload_threads = []
+        for i, (server_host, server_port) in enumerate(available_servers[:3]):  # Use first 3 servers
+            x = Threadvalue(target=func, args=(server_host, server_port, clientId, a, newarr[i], filepath))
+            upload_threads.append(x)
+            x.start()
 
-        serverIds=[sid1,sid2,sid3]
+        # Collect server IDs
+        serverIds = []
+        for thread in upload_threads:
+            sid = thread.join()
+            serverIds.append(sid)
 
-        # # Metadata is created in a local file 
-        # if (not(os.path.exists(metadataFileName))):
-        #     f=open(metadataFileName,'a+')
-        #     f.write('#\n')
-        #     f.write(filepath)
-        #     f.write('\n')
-        #     f.close()
-        #     f=open(metadataFileName,'ab')
-        #     f.write(fileKey)
-        #     f.write(bytes('\n','utf-8'))
-        #     f.close()
-        #     f=open(metadataFileName,'a+')
-        #     k=1
-        #     for i in range(3):
-        #         for j in range(int(len(shards)/3)):
-        #             wr=str(serverIds[i])+','+str(k)
-        #             k=k+1
-        #             f.write(wr)
-        #             f.write('\n')
-        #     f.close()
-
-        # else:
-        #     f=open(metadataFileName,'r+')
-        #     size=os.path.getsize(metadataFileName)
-        #     print('sizee',size)
-        #     filedata = f.read(size)
-        #     print(len(filedata))
-        #     pattern = r'#\n' + re.escape(filepath) + r'\n'
-        #     if not re.search(pattern, filedata):
-        #         print("File not found in metadata")
-        #         f.write('#\n')
-        #         f.write(filepath)
-        #         f.write('\n')
-        #         f.close()
-        #         f=open(metadataFileName,'ab')
-        #         f.write(fileKey)
-        #         f.write(bytes('\n','utf-8'))
-        #         f.close()
-        #         f=open(metadataFileName,'a+')
-        #         k=1
-        #         for i in range(3):
-        #             for j in range(int(len(shards)/3)):
-        #                 wr=str(serverIds[i])+','+str(k)
-        #                 k=k+1
-        #                 f.write(wr)
-        #                 f.write('\n')
-        #         f.close()
-        
         # Add file metadata to blockchain
         metadata = fileKey.decode() + '\n'
         k=1
@@ -378,29 +362,6 @@ while (True):
         fileIdList=[]
         metadataKeyList=[]
         
-        # # Metadata is accessed from local file
-        # metadataFileName=clientId+'.txt'
-        # f=open(metadataFileName,'r')
-        # size=os.path.getsize(metadataFileName)
-        # file=f.read(size)
-        # f.close()
-        # #print(type(file))
-        # filelist=file.split('#\n')
-        # filelist.remove('')
-        # print(filelist)
-        # print('Select from the following list of files.')
-        # for i,j in enumerate(filelist):
-        #     temp=j.split('\n')
-        #     #if(i!=0):
-        #     print(i+1,' ',temp[0])
-        #     namelist.append(temp[0])
-        #     flist.append(temp)
-        #     flist[i].remove(temp[0])
-        #     flist[i].remove('')
-        #     flist[i].remove(temp[0])
-        
-        # print(flist)
-
         # Get file id, metadata key and filename from local file
         metadataFileName=clientId+'.txt'
         f=open(metadataFileName,'r')
@@ -443,41 +404,19 @@ while (True):
         print(flist)
 
         # Multi Threading is used to connect with multiple servers in paralel to Download the file
-        x=Threadvalue(target=func, args =(h,p,clientId,a,flist,namelist[int(b)-1]))
-        y=Threadvalue(target=func, args=(h1,p1,clientId,a,flist,namelist[int(b)-1]))
-        z=Threadvalue(target=func, args=(h2,p2,clientId,a,flist,namelist[int(b)-1]))
-        x.start()
-        data1=x.join()
-        y.start()
-        data2=y.join()
-        z.start()
-        data3=z.join()
-        '''
-        temp1=''.join([str(i) for i in data1])
-        temp2=''.join([str(i) for i in data2])
-        temp3=''.join([str(i) for i in data3])
-        '''
-        # Data shards are joined together 
-        data= data1+data2+data3
+        download_threads = []
+        for server_host, server_port in available_servers:
+            thread = Threadvalue(target=func, args=(server_host, server_port, clientId, a, flist, namelist[int(b)-1]))
+            download_threads.append(thread)
+            thread.start()
+
+        # Collect downloaded data
+        data = b''
+        for thread in download_threads:
+            data += thread.join()
         
-        # f=open(metadataFileName,'rb')
-        # size=os.path.getsize(metadataFileName)
-        # file=f.readlines(size)
-        # f.close()
-        # j=0
-        # for i,k in enumerate(file):
-        #     print(k.decode())
-        #     if(k.decode()=='#\r\n'):
-        #         j=j+1
-        #         print('j=',j)
-        #         if(j==int(b)):
-        #             keyy=file[i+2]  # Key is read from the metadata for decryption 
-        #             print('b')
-        # #ke=bytes(keyy,'base64')
-        # fileKey=keyy[:-1]
         print(type(fileKey))
         print(fileKey)
-        #filelist=file.split('#\n')
         print(data)
         print(type(data))
         fernet= Fernet(fileKey)

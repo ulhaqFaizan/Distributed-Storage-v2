@@ -75,6 +75,7 @@ def func(x,y):
             if(curfol!=fname):
                 os.chdir(fname)
                 
+            
             filname=str(int(buff)*2 - 1)+ '.txt'
             print(type(filname))
             f=open(filname,'wb')
@@ -159,9 +160,44 @@ def func(x,y):
         conn.sendall(tosend)
         '''
         conn.close()  
+
+def register_with_registry(host, port, registry_host='127.0.0.1', registry_port=65430):
+    """Register server with registry service"""
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((registry_host, registry_port))
+        
+        # Send connection type (1 for server)
+        s.send(b'1')
+        
+        # Send server's port number
+        port_str = str(port).encode()
+        size = len(port_str)
+        s.sendall(size.to_bytes(4, 'big'))
+        s.sendall(port_str)
+        
+        # Keep connection alive and respond to heartbeats
+        while True:
+            try:
+                data = s.recv(4)
+                if data == b'ping':
+                    s.send(b'pong')
+            except:
+                break
+                
+    except Exception as e:
+        print(f"Failed to register with registry: {e}")
+    finally:
+        s.close()
+
 HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
-PORT = 65434       # Port to listen on (non-privileged ports are > 1023)
-curdir=os.getcwd()
+PORT = 65433        # Port to listen on (non-privileged ports are > 1023)
+curdir = os.getcwd()
+
+# Start registry connection in a separate thread
+registry_thread = threading.Thread(target=register_with_registry, args=(HOST, PORT))
+registry_thread.daemon = True
+registry_thread.start()
 
 buff = b''
 buff1=b''
