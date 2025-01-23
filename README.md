@@ -11,6 +11,7 @@ Core functionality is implemented including:
 - Blockchain integration for metadata management
 - Multi-threaded architecture
 - Encryption and sharding
+- Dynamic server discovery
 
 ## 🎯 Key Features
 
@@ -20,8 +21,17 @@ Core functionality is implemented including:
 - **Multi-threaded Architecture**: Parallel connections for improved performance
 - **Blockchain Metadata**: File metadata stored securely on Ethereum Sepolia testnet
 - **Smart Contract Integration**: Secure metadata management with ownership verification
+- **Dynamic Server Discovery**: Automatic discovery and monitoring of storage servers
+- **High Availability**: Real-time server health monitoring and status updates
 
 ## 🔧 Technical Implementation
+
+### Registry Server
+- Central server for managing active storage nodes
+- Real-time health monitoring through heartbeat mechanism
+- Automatic registration and deregistration of storage servers
+- Provides dynamic server discovery for clients
+- Maintains minimum requirement of 3 active storage servers
 
 ### Security
 - Files are encrypted using the `cryptography.fernet` module before transmission
@@ -31,10 +41,9 @@ Core functionality is implemented including:
 - Data is sharded and distributed across multiple storage nodes
 
 ### Network Architecture
-- Client-Server model with multi-threading support
-- Each storage node runs a server instance
-- Clients can connect to multiple storage nodes simultaneously
-- Currently designed for exactly 3 storage nodes (will be generalized in future updates)
+- Registry server for dynamic server discovery
+- Minimum of 3 storage nodes required for redundancy
+- Multi-threaded client-server communication
 - Parallel shard transfer using multiple connections
 - Blockchain integration for metadata management
 
@@ -49,7 +58,6 @@ Core functionality is implemented including:
 
 ## 🚀 Future Enhancements
 
-- [ ] Support for dynamic number of storage providers
 - [ ] Economic incentives for storage providers
 - [ ] Enhanced security features
 - [ ] Web interface for easy access
@@ -64,6 +72,7 @@ Core functionality is implemented including:
   - cryptography
   - numpy
   - threading
+  - python-dotenv
 
 ## 💻 Environment Setup
 
@@ -75,17 +84,25 @@ ETH_PRIVATE_KEY=your_ethereum_private_key
 
 ## 🚀 Usage
 
-1. **Start Storage Servers**
-   - Run each server on different ports (65432, 65434, 65435)
-   - Servers automatically create storage directories
+1. **Start Registry Server**
+   ```bash
+   python registry_server.py
+   ```
 
-2. **Upload File**
+2. **Start Storage Servers**
+   - Run at least 3 storage servers
+   - Servers will automatically register with registry
+   - Servers create storage directories as needed
+
+3. **Upload File**
+   - Client discovers available servers from registry
    - File is encrypted
    - Split into 6 shards
    - Distributed across 3 storage nodes
    - Metadata stored on blockchain
 
-3. **Download File**
+4. **Download File**
+   - Client gets available server list from registry
    - Retrieves metadata from blockchain
    - Fetches shards from storage nodes
    - Reassembles and decrypts the file
