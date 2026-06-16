@@ -1,6 +1,6 @@
 # Distributed-Storage-v2
 
-# Distributed Storage Network (Work in Progress)
+# Distributed Storage Network
 
 A peer-to-peer distributed storage solution that allows users to share and utilize excess storage space across the network. The project implements secure file sharing with encryption, sharding, and blockchain-based metadata management on Ethereum's Sepolia testnet.
 
