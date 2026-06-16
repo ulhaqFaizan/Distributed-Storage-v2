@@ -4,7 +4,7 @@
 
 A peer-to-peer distributed storage solution that allows users to share and utilize excess storage space across the network. The project implements secure file sharing with encryption, sharding, and blockchain-based metadata management on Ethereum's Sepolia testnet.
 
-## 🚧 Project Status: In Development
+##
 
 Core functionality is implemented including:
 - File transfer and storage
